@@ -25,7 +25,9 @@ def attack_unit(attacker,target):
         return False
 
     if not target.alive:
-        print("Target is dead")
+        return False
+
+    if not attacker.can_attack():
         return False
 
     if not is_in_attack_range(
@@ -35,6 +37,7 @@ def attack_unit(attacker,target):
         return False
 
     target.take_damage(attacker.damage)
+    attacker.reset_attack_cooldown()
 
     return True
 
@@ -55,6 +58,9 @@ def attack_tower(
     if tower_hp[tower_index] <= 0:
         return False
 
+    if not attacker.can_attack():
+        return False
+
     if not is_in_attack_range(
         attacker,
         tower_positions[tower_index]):
@@ -64,5 +70,7 @@ def attack_tower(
 
     if tower_hp[tower_index] < 0:
         tower_hp[tower_index] = 0
+
+    attacker.reset_attack_cooldown()
 
     return True

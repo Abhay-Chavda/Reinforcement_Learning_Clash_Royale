@@ -12,5 +12,6 @@ class Archer(Card):
             speed=0.25,
             attack_range=0.20,
             aggro_range=0.20,
+            attack_cooldown=1.2,
             target_type="troops_and_buildings"
         )

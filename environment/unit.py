@@ -2,7 +2,7 @@ import numpy as np
 
 class Unit:
 
-    def __init__(self,troop_type,position):
+    def __init__(self, troop_type, position, lane="left", team="player"):
         self.troop_type = troop_type
 
         self.name = troop_type.name
@@ -13,13 +13,26 @@ class Unit:
         self.speed = troop_type.speed
         self.attack_range = troop_type.attack_range
         self.aggro_range = troop_type.aggro_range
+        self.attack_cooldown = troop_type.attack_cooldown
         self.target_type = troop_type.target_type
 
         #position
         self.position = np.array(position,dtype=np.float32)
+        self.lane = lane
+        self.team = team
 
         #state
         self.alive = True
+        self.time_until_next_attack = 0.0
+
+    def update_cooldown(self, dt):
+        self.time_until_next_attack = max(0.0, self.time_until_next_attack - dt)
+
+    def can_attack(self):
+        return self.alive and self.time_until_next_attack <= 0.0
+
+    def reset_attack_cooldown(self):
+        self.time_until_next_attack = self.attack_cooldown
 
     def move_towards(self, target_position,dt):
         '''Move the unit towards the target position based on its speed and the time step dt.'''

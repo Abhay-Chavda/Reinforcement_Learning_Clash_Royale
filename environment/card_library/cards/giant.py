@@ -12,5 +12,6 @@ class Giant(Card):
             speed=0.10,
             attack_range=0.05,
             aggro_range=0.25,
+            attack_cooldown=1.5,
             target_type="buildings"
         )

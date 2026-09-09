@@ -1,0 +1,21 @@
+========== First BaseLine ==========
+Player wins: 28
+Opponent wins: 65
+Draws: 7
+Total episodes: 100
+Player win rate: 28.00%
+
+========== PPO Evaluation Summary Seed 7 ==========
+Player wins: 95
+Opponent wins: 4
+Draws: 1
+Total episodes: 100
+PPO player win rate: 95.00%
+Saved: results/ppo_sparse_seed_7.csv
+
+========== PPO Evaluation Summary Seed 123 ==========
+Player wins: 92
+Opponent wins: 7
+Draws: 1
+Total episodes: 100
+PPO player win rate: 92.00%

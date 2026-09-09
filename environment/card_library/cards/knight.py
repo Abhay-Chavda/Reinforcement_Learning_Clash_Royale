@@ -12,5 +12,6 @@ class Knight(Card):
             speed=0.20,
             attack_range=0.05,
             aggro_range=0.20,
+            attack_cooldown=1.0,
             target_type="troops_and_buildings"
         )
