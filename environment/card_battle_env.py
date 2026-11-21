@@ -42,11 +42,12 @@ class CardBattleEnv(gym.Env):
         )
         self.max_units_per_side = 10
         self.unit_feature_count = 7
-        self.reset()
+        # opponent_policy: optional callable with the Stable-Baselines3
+        # ``predict(obs, deterministic=True)`` signature. It receives the
+        # board mirrored to its own perspective (see ``_observation``).
         self.opponent_policy = opponent_policy
         self.reward_shaping = reward_shaping
-        self._prev_player_towers_hp = None
-        self._prev_opponent_towers_hp = None
+        self.reset()
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -156,7 +157,7 @@ class CardBattleEnv(gym.Env):
             return
         self.opponent_action_timer = 1.0
         if self.opponent_policy is not None:
-            obs = self._observation()
+            obs = self._observation(perspective="opponent")
             action, _ = self.opponent_policy(obs, deterministic=True)
             self._deploy_from_action(int(action), "opponent")
             return
@@ -312,7 +313,7 @@ class CardBattleEnv(gym.Env):
         return "player" if player_hp > opponent_hp else "opponent"
 
 
-    def _encode_units(self, units):
+    def _encode_units(self, units, mirror=False):
         """
         Convert a variable-length troop list into 10 fixed observation slots.
 
@@ -336,39 +337,51 @@ class CardBattleEnv(gym.Env):
                 card_type,
                 lane,
                 unit.position[0],
-                unit.position[1],
+                1.0 - unit.position[1] if mirror else unit.position[1],
                 unit.hp / unit.max_hp,
                 unit.time_until_next_attack / unit.attack_cooldown,
             ]
 
         return encoded.flatten()
     
-    def _observation(self):
+    def _observation(self, perspective="player"):
+        """Build the 149-value observation.
+
+        ``perspective="opponent"`` returns the same board reflected along the
+        y-axis (y -> 1 - y) with the two sides swapped, so a policy trained as
+        the bottom player can be reused unchanged as the top player. Lanes keep
+        their x position, so actions keep the same meaning for both sides.
+        """
         tower_max_hp = np.array(
             [2500.0, 5000.0, 2500.0],
             dtype=np.float32
         )
 
+        if perspective == "player":
+            own_towers, enemy_towers = self.player_towers_hp, self.opponent_towers_hp
+            own_elixir, enemy_elixir = self.player_elixir, self.opponent_elixir
+            own_units, enemy_units = self.player_units, self.opponent_units
+            mirror = False
+        elif perspective == "opponent":
+            own_towers, enemy_towers = self.opponent_towers_hp, self.player_towers_hp
+            own_elixir, enemy_elixir = self.opponent_elixir, self.player_elixir
+            own_units, enemy_units = self.opponent_units, self.player_units
+            mirror = True
+        else:
+            raise ValueError("perspective must be 'player' or 'opponent'.")
+
         basic_state = np.array([
-            *self.player_towers_hp / tower_max_hp,
-            *self.opponent_towers_hp / tower_max_hp,
-            self.player_elixir / self.max_elixir,
-            self.opponent_elixir / self.max_elixir,
+            *own_towers / tower_max_hp,
+            *enemy_towers / tower_max_hp,
+            own_elixir / self.max_elixir,
+            enemy_elixir / self.max_elixir,
             self.time_remaining / self.game_duration,
         ], dtype=np.float32)
 
-        player_units_state = self._encode_units(
-            self.player_units
-        )
-
-        opponent_units_state = self._encode_units(
-            self.opponent_units
-        )
-
         return np.concatenate([
             basic_state,
-            player_units_state,
-            opponent_units_state,
+            self._encode_units(own_units, mirror),
+            self._encode_units(enemy_units, mirror),
         ]).astype(np.float32)
 
     def render(self):

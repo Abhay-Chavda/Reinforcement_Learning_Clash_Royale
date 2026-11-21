@@ -133,3 +133,30 @@ def test_same_seed_reproduces_same_match():
         assert first_done == second_done
         assert first_time == second_time
         assert first_info == second_info
+
+def test_opponent_view_mirrors_board():
+    env = CardBattleEnv()
+    env.reset(seed=3)
+    env.step(env.KNIGHT_LEFT)
+    env.opponent_towers_hp[0] = 1000.0
+
+    player_view = env._observation("player")
+    opponent_view = env._observation("opponent")
+
+    # Tower HP blocks are swapped between the two views.
+    np.testing.assert_allclose(opponent_view[0:3], player_view[3:6])
+    np.testing.assert_allclose(opponent_view[3:6], player_view[0:3])
+
+    # The player's Knight appears in the opponent's "enemy" unit block,
+    # reflected along y and with the same lane / x position.
+    enemy_block = opponent_view[9 + 70:9 + 77]
+    own_block = player_view[9:16]
+    assert enemy_block[0] == 1.0
+    assert enemy_block[3] == own_block[3]
+    np.testing.assert_allclose(enemy_block[4], 1.0 - own_block[4], atol=1e-6)
+
+
+def test_symmetric_start_gives_identical_views():
+    env = CardBattleEnv()
+    env.reset(seed=0)
+    np.testing.assert_allclose(env._observation("player"), env._observation("opponent"))
