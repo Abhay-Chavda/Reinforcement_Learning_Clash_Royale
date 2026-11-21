@@ -6,7 +6,7 @@ from stable_baselines3 import PPO
 from environment.card_battle_env import CardBattleEnv
 
 
-MODEL_PATH = "models/ppo_sparse_seed_123.zip"
+MODEL_PATH = "models/ppo_vs_ppo_shaped_seed_7.zip"
 EVALUATION_SEEDS = range(1000, 1100)
 
 Path("results").mkdir(exist_ok=True)
@@ -52,7 +52,7 @@ for seed in EVALUATION_SEEDS:
     )
 
 with open(
-    "results/ppo_evaluation_seed_123.csv",
+    "results/ppo_vs_ppo_shaped_seed_7_evaluation.csv",
     "w",
     newline=""
 ) as file:
@@ -86,4 +86,4 @@ print(f"Opponent wins: {opponent_wins}")
 print(f"Draws: {draws}")
 print(f"Total episodes: {total_games}")
 print(f"PPO player win rate: {player_wins / total_games:.2%}")
-print("Saved: results/ppo_sparse_seed_7.csv")
+print("Saved: results/ppo_vs_ppo_shaped_seed_7_evaluation.csv")

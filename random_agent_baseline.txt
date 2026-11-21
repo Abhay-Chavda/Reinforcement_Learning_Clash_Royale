@@ -19,3 +19,74 @@ Opponent wins: 7
 Draws: 1
 Total episodes: 100
 PPO player win rate: 92.00%
+
+========== PPO Reward Shaping Evaluation Summary Seed 7  ==========
+Player wins: 85
+Opponent wins: 15
+Draws: 0
+Total episodes: 100
+PPO player win rate: 85.00%
+Saved: results/ppo_shaped_seed_7_evaluation.csv
+
+========== PPO Reward shaping Evaluation Summary Seed 42 ==========
+Player wins: 69
+Opponent wins: 25
+Draws: 6
+Total episodes: 100
+PPO player win rate: 69.00%
+
+========== PPO Reward Shaping Evaluation Summary Seed 123 ==========
+Player wins: 100
+Opponent wins: 0
+Draws: 0
+Total episodes: 100
+PPO player win rate: 100.00%
+Saved: results/ppo_shaped_seed_123_evaluation.csv
+
+========== PPO Vs PPO Model sparse Evaluation Summary ==========
+Player wins: 69
+Opponent wins: 30
+Draws: 1
+Total episodes: 100
+PPO player win rate: 69.00%
+Saved: results/ppo_shaped_seed_123_evaluation.csv
+
+========== PPO vs PPO Model Sparse Evaluation Summary seed 42 ==========
+Player wins: 86
+Opponent wins: 13
+Draws: 1
+Total episodes: 100
+PPO player win rate: 86.00%
+Saved: results/ppo_vs_ppo_sparse_seed_42_evaluation.csv
+
+========== PPO vs PPO Model Sparse Evaluation Summary seed 7 ==========
+Player wins: 77
+Opponent wins: 23
+Draws: 0
+Total episodes: 100
+PPO player win rate: 77.00%
+Saved: results/ppo_vs_ppo_sparse_seed_7_evaluation.csv
+
+========== PPO VS PPO model Shaped Evaluation Summary seed 123==========
+Player wins: 95
+Opponent wins: 5
+Draws: 0
+Total episodes: 100
+PPO player win rate: 95.00%
+Saved: results/ppo_vs_ppo_shaped_seed_123_evaluation.csv
+
+========== PPO VS PPO model Shaped Evaluation Summary seed 42 ==========
+Player wins: 77
+Opponent wins: 21
+Draws: 2
+Total episodes: 100
+PPO player win rate: 77.00%
+Saved: results/ppo_vs_ppo_shaped_seed_42_evaluation.csv
+
+========== PPO VS PPO model Shaped Evaluation Summary seed 7 ==========
+Player wins: 76
+Opponent wins: 24
+Draws: 0
+Total episodes: 100
+PPO player win rate: 76.00%
+Saved: results/ppo_vs_ppo_shaped_seed_7_evaluation.csv

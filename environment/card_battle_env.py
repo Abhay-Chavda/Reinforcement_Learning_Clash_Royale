@@ -19,7 +19,7 @@ class CardBattleEnv(gym.Env):
     LANES = ("left", "right")
     LANE_X = {"left": 0.25, "right": 0.75}
 
-    def __init__(self, game_duration=180.0, dt=0.5, reward_shaping=False):
+    def __init__(self, game_duration=180.0, dt=0.5, reward_shaping=False,opponent_policy=None):
         super().__init__()
         self.dt = dt
         self.game_duration = game_duration
@@ -43,6 +43,7 @@ class CardBattleEnv(gym.Env):
         self.max_units_per_side = 10
         self.unit_feature_count = 7
         self.reset()
+        self.opponent_policy = opponent_policy
         self.reward_shaping = reward_shaping
         self._prev_player_towers_hp = None
         self._prev_opponent_towers_hp = None
@@ -154,6 +155,11 @@ class CardBattleEnv(gym.Env):
         if self.opponent_action_timer > 0.0:
             return
         self.opponent_action_timer = 1.0
+        if self.opponent_policy is not None:
+            obs = self._observation()
+            action, _ = self.opponent_policy(obs, deterministic=True)
+            self._deploy_from_action(int(action), "opponent")
+            return
         affordable_actions = [self.WAIT]
         for action in range(1, 5):
             card_name = "Knight" if action <= 2 else "Giant"
