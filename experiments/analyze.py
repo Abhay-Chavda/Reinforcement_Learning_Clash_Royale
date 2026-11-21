@@ -21,6 +21,8 @@ FIG, TAB = Path("paper/figures"), Path("paper/tables")
 CONDITIONS = [
     "PPO sparse / train vs random",
     "PPO shaped / train vs random",
+    "PPO sparse / train vs heuristic",
+    "PPO shaped / train vs heuristic",
     "PPO sparse / train vs ppo",
     "PPO shaped / train vs ppo",
 ]
@@ -29,13 +31,16 @@ SHORT = {
     "Heuristic baseline": "Heuristic",
     "PPO sparse / train vs random": "Sparse | Rand",
     "PPO shaped / train vs random": "Shaped | Rand",
+    "PPO sparse / train vs heuristic": "Sparse | Heur",
+    "PPO shaped / train vs heuristic": "Shaped | Heur",
     "PPO sparse / train vs ppo": "Sparse | PPO",
     "PPO shaped / train vs ppo": "Shaped | PPO",
 }
-# Validated categorical slots 1-4 (light mode); baselines use neutral grays.
+# Validated categorical slots 1-6 (light mode); baselines use neutral grays.
 COLORS = {
     CONDITIONS[0]: "#2a78d6", CONDITIONS[1]: "#eb6834",
     CONDITIONS[2]: "#1baf7a", CONDITIONS[3]: "#eda100",
+    CONDITIONS[4]: "#e87ba4", CONDITIONS[5]: "#008300",
     "Random baseline": "#b4b3ad", "Heuristic baseline": "#6f6e69",
 }
 OPPONENTS = {"random": "Random opponent", "heuristic": "Heuristic opponent",
@@ -147,12 +152,12 @@ def load_curves():
 
 def fig_learning_curves(curves):
     grid = np.linspace(5_000, 100_000, 96)
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.7), sharey=True)
-    for ax, train_opp, title in zip(axes, ["random", "ppo"],
-                                    ["Training vs random opponent", "Training vs frozen-PPO opponent"]):
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.6), sharey=True)
+    for ax, train_opp, title in zip(axes, ["random", "heuristic", "ppo"],
+                                    ["Train vs random", "Train vs heuristic", "Train vs frozen PPO"]):
         for c in [c for c in CONDITIONS if c.endswith(train_opp)]:
             sub = curves[curves.condition == c]
-            ys = np.array([np.interp(grid, g.timestep, g.rolling.fillna(0.5))
+            ys = np.array([np.interp(grid, g.timestep, g["rolling"].fillna(0.5))
                            for _, g in sub.groupby("seed")])
             mean, std = ys.mean(0), ys.std(0)
             ax.fill_between(grid, mean - std, mean + std, color=COLORS[c], alpha=0.18, lw=0)
@@ -163,7 +168,7 @@ def fig_learning_curves(curves):
         ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v / 1000:.0f}k"))
         ax.set_ylim(0, 1)
         ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
-        ax.legend(loc="lower right", fontsize=8)
+        ax.legend(loc="lower right" if train_opp == "random" else "upper left", fontsize=8)
     axes[0].set_ylabel("Training win rate\n(50-episode rolling)")
     fig.tight_layout()
     save(fig, "learning_curves")
@@ -171,7 +176,7 @@ def fig_learning_curves(curves):
 
 def fig_win_rates(summary, per_seed):
     conds = order(summary.condition)
-    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.9), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 3.0), sharey=True)
     x = np.arange(len(conds))
     for ax, (opp, title) in zip(axes, OPPONENTS.items()):
         for i, c in enumerate(conds):
@@ -181,12 +186,13 @@ def fig_win_rates(summary, per_seed):
             if len(seeds) > 1:
                 jitter = np.linspace(-0.18, 0.18, len(seeds))
                 ax.scatter(i + jitter, seeds, s=10, color=INK, zorder=3, linewidths=0)
-            ax.text(i, min(r.win_mean + 0.03, 1.02), f"{100 * r.win_mean:.0f}",
-                    ha="center", va="bottom", fontsize=7, color=MUTED)
+            ax.text(i, 1.06, f"{100 * r.win_mean:.0f}",
+                    ha="center", va="center", fontsize=7, color=MUTED)
         ax.axhline(0.5, color=MUTED, lw=0.8, ls=(0, (3, 3)))
         ax.set_title(title, fontsize=9, color=INK, loc="left")
         ax.set_xticks(x, [SHORT[c] for c in conds], rotation=50, ha="right", fontsize=7.5)
-        ax.set_ylim(0, 1.1)
+        ax.set_ylim(0, 1.12)
+        ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
         ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
         ax.grid(axis="x", visible=False)
     axes[0].set_ylabel("Evaluation win rate")
@@ -206,7 +212,7 @@ def fig_actions(df):
     # Deployments only (exclude wait) for a readable second panel.
     deploy = pd.DataFrame({k: v for k, v in parts.items() if k != "Wait"}).assign(condition=sub.condition)
     deploy = deploy.groupby("condition").mean().loc[conds]
-    colors = {"Wait": "#c9c8c2", "Knight": "#6250d6", "Giant": "#e87ba4"}
+    colors = {"Wait": "#c9c8c2", "Knight": "#6250d6", "Giant": "#e34948"}
 
     fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.6))
     y = np.arange(len(conds))
@@ -226,7 +232,7 @@ def fig_actions(df):
     axes[1].barh(y + w / 2, deploy.Giant, height=w, color=colors["Giant"], label="Giant")
     axes[1].set_yticks(y, [])
     axes[1].invert_yaxis()
-    axes[1].set_title("Attempted deployments per game", fontsize=9, color=INK, loc="left")
+    axes[1].set_title("Deploy attempts per game (incl. unaffordable)", fontsize=9, color=INK, loc="left")
     axes[1].legend(ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.14), fontsize=8)
     axes[1].grid(axis="y", visible=False)
     fig.tight_layout()

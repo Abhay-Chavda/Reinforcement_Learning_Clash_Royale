@@ -18,6 +18,11 @@ from experiments.train import DEFAULT_OPPONENT_MODEL, GAME_DURATION
 
 EVAL_SEED_START = 1000  # held out: training never resets with these seeds
 EVAL_OPPONENTS = ("random", "heuristic", "ppo_frozen")
+# The heuristic and frozen-PPO opponents are deterministic, and so is the
+# simulator, so without noise all evaluation episodes would be the same game.
+# Each of their decisions is replaced by a random affordable action with
+# probability EPSILON, seeded per episode.
+EPSILON = 0.1
 NAME_RE = re.compile(r"ppo_(?P<reward>sparse|shaped)_vs_(?P<train_opp>\w+?)_seed(?P<seed>\d+)$")
 
 
@@ -39,6 +44,19 @@ def _opponent_policy(opponent_id):
     return PPO.load(DEFAULT_OPPONENT_MODEL, device="cpu").predict
 
 
+def epsilon_perturbed(policy, episode_seed, epsilon=EPSILON):
+    if policy is None or epsilon == 0:
+        return policy
+    rng = np.random.default_rng(10_000 + episode_seed)
+    fallback = RandomAgent(seed=20_000 + episode_seed)
+
+    def predict(obs, deterministic=True):
+        if rng.random() < epsilon:
+            return fallback.predict(obs)
+        return policy(obs, deterministic=deterministic)
+    return predict
+
+
 def evaluate_pair(job):
     agent_id, opponent_id, episodes = job
     opponent = _opponent_policy(opponent_id)
@@ -46,7 +64,8 @@ def evaluate_pair(job):
     rows = []
     for episode_seed in range(EVAL_SEED_START, EVAL_SEED_START + episodes):
         agent = model or _load_agent(agent_id, episode_seed)
-        env = CardBattleEnv(game_duration=GAME_DURATION, opponent_policy=opponent)
+        env = CardBattleEnv(game_duration=GAME_DURATION,
+                            opponent_policy=epsilon_perturbed(opponent, episode_seed))
         obs, _ = env.reset(seed=episode_seed)
         actions = np.zeros(5, dtype=int)
         invalid = steps = 0
